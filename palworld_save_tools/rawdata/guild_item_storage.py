@@ -1,6 +1,5 @@
-from typing import Any, Sequence
-
-from palworld_save_tools.archive import *
+from typing import Any, Optional, Sequence
+from palworld_save_tools.archive import FArchiveReader, FArchiveWriter
 
 
 def decode(
@@ -15,20 +14,10 @@ def decode(
 
 
 def decode_bytes(
-    parent_reader: FArchiveReader, c_bytes: Sequence[int]
-) -> Optional[dict[str, Any]]:
-    if len(c_bytes) == 0:
-        return None
-    reader = parent_reader.internal_copy(bytes(c_bytes), debug=False)
-    data = {
-        "player_uid": reader.guid(),
-        "instance_id": reader.guid(),
-        "permission_tribe_id": reader.byte(),
-    }
-    if not reader.eof():
-        data["unknown_data"] = [int(b) for b in reader.read_to_end()]
-        # raise Exception("Warning: EOF not reached")
-    return data
+    parent_reader: FArchiveReader, m_bytes: Sequence[int]
+) -> dict[str, Any]:
+    reader = parent_reader.internal_copy(bytes(m_bytes), debug=False)
+    return {"container_id": reader.guid()}
 
 
 def encode(
@@ -42,14 +31,12 @@ def encode(
     return writer.property_inner(property_type, properties)
 
 
-def encode_bytes(p: dict[str, Any]) -> bytes:
+def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
     if p is None:
-        return bytes()
+        return b""
+
     writer = FArchiveWriter()
-    writer.guid(p["player_uid"])
-    writer.guid(p["instance_id"])
-    writer.byte(p["permission_tribe_id"])
-    if "unknown_data" in p:
-        writer.write(bytes(p["unknown_data"]))
+    writer.guid(p["container_id"])
+
     encoded_bytes = writer.bytes()
     return encoded_bytes

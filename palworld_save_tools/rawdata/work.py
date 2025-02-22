@@ -11,6 +11,7 @@ WORK_BASE_TYPES = set(
         "EPalWorkableType::TransportItemInBaseCamp",
         "EPalWorkableType::ReviveCharacter",
         # "EPalWorkableType::CollectResource",
+        "EPalWorkableType::Booth",
         "EPalWorkableType::LevelObject",
         "EPalWorkableType::Repair",
         "EPalWorkableType::Defense",
@@ -107,7 +108,10 @@ def decode_bytes(
     # UPalWorkProgressTransformBase->SerializeProperties
     transform_type = reader.byte()
     data["transform"] = {"type": transform_type, "v2": 0}
-    if transform_type == 1:
+    if transform_type == 0:
+        data["transform"]["sub_type"] = reader.byte()
+        data["transform"]["map_object_instance_id"] = reader.guid()
+    elif transform_type == 1:
         data["transform"].update(reader.ftransform())
     elif transform_type == 2:
         data["transform"]["map_object_instance_id"] = reader.guid()
@@ -231,7 +235,10 @@ def encode_bytes(p: dict[str, Any], work_type: str) -> bytes:
     # UPalWorkProgressTransformBase->SerializeProperties
     transform_type = p["transform"]["type"]
     writer.byte(transform_type)
-    if transform_type == 1:
+    if transform_type == 0:
+        writer.byte(p["transform"]["sub_type"])
+        writer.guid(p["transform"]["map_object_instance_id"])
+    elif transform_type == 1:
         # pre-v2 the transform was deserialised in the wrong order
         if "v2" not in p["transform"]:
             writer.vector_dict(p["transform"]["location"])

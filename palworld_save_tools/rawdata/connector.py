@@ -43,18 +43,7 @@ def decode_bytes(
     # Stairs have 2 connectors (up and down),
     # Roofs have 4 connectors (front, back, right, left)
     if not reader.eof():
-        data["other_connectors"] = []
-        while not reader.eof():
-            data["other_connectors"].append(
-                {
-                    "index": reader.byte(),
-                    "connect": reader.tarray(connect_info_item_reader),
-                }
-            )
-        if len(data["other_connectors"]) not in [2, 4]:
-            print(
-                f"Warning: unknown connector type with {len(data['other_connectors'])} connectors"
-            )
+        data["unknown_data"] = [int(b) for b in reader.read_to_end()]
     return data
 
 
@@ -76,9 +65,7 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.i32(p["supported_level"])
     writer.byte(p["connect"]["index"])
     writer.tarray(connect_info_item_writer, p["connect"]["any_place"])
-    if "other_connectors" in p:
-        for other in p["other_connectors"]:
-            writer.byte(other["index"])
-            writer.tarray(connect_info_item_writer, other["connect"])
+    if "unknown_data" in p:
+        writer.write(bytes(p["unknown_data"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

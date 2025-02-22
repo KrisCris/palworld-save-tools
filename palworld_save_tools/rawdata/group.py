@@ -74,6 +74,9 @@ def decode_bytes(
             }
             guild["players"].append(player)
         group_data |= guild
+        remaining_data = reader.read_to_end()
+        if remaining_data:
+            group_data["raw_data"] = [b for b in remaining_data]
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
     return group_data
@@ -124,5 +127,7 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
             writer.guid(p["players"][i]["player_uid"])
             writer.i64(p["players"][i]["player_info"]["last_online_real_time"])
             writer.fstring(p["players"][i]["player_info"]["player_name"])
+        if "raw_data" in p:
+            writer.write(bytes(p["raw_data"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

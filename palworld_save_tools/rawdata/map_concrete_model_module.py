@@ -64,6 +64,8 @@ def decode_bytes(
         data["lock_state"] = reader.byte()
         data["password"] = reader.fstring()
         data["player_infos"] = reader.tarray(player_lock_info_reader)
+    elif module_type == "EPalMapObjectConcreteModelModuleType::RequireElementalAction":
+        data["unknown_data"] = [int(b) for b in reader.read_to_end()]
 
     if not reader.eof():
         raise Exception(f"Warning: EOF not reached for module type {module_type}")
@@ -102,6 +104,8 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
         writer.byte(p["lock_state"])
         writer.fstring(p["password"])
         writer.tarray(player_lock_info_writer, p["player_infos"])
+    elif module_type == "EPalMapObjectConcreteModelModuleType::RequireElementalAction":
+        writer.write(bytes(p["unknown_data"]))
 
     encoded_bytes = writer.bytes()
     return encoded_bytes

@@ -13,6 +13,7 @@ NO_OP_TYPES = [
     "EPalBaseCampModuleType::ItemStorages",
     "EPalBaseCampModuleType::FacilityReservation",
     "EPalBaseCampModuleType::ObjectMaintenance",
+    "EPalBaseCampModuleType::ItemStackInfo",
 ]
 
 
@@ -44,6 +45,9 @@ PASSIVE_EFFECT_ENUM = {
     0: "EPalBaseCampPassiveEffectType::None",
     1: "EPalBaseCampPassiveEffectType::WorkSuitability",
     2: "EPalBaseCampPassiveEffectType::WorkHard",
+    3: "EPalBaseCampPassiveEffectType::AllWorkSpeed",
+    4: "EPalBaseCampPassiveEffectType::SanityDecreaseSuppressor",
+    5: "EPalBaseCampPassiveEffectType::EPalBaseCampPassiveEffectType_MAX",
 }
 
 

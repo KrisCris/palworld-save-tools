@@ -10,4 +10,6 @@ class CustomEncoder(json.JSONEncoder):
             return str(obj)
         if isinstance(obj, uuid.UUID):
             return str(obj)
+        if isinstance(obj, bytes):
+            return obj.hex()
         return super(CustomEncoder, self).default(obj)
