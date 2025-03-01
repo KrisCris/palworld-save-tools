@@ -446,10 +446,7 @@ def decode_bytes(
             if not reader.eof():
                 data["unknown_bytes"] = [int(b) for b in reader.read_to_end()]
         case "PalMapObjectPalBoothModel":
-            data["private_lock_player_uid"] = reader.guid()
-            data["trade_infos"] = reader.tarray(pal_pal_booth_trade_info_read)
-            if not reader.eof():
-                data["unknown_bytes"] = [int(b) for b in reader.read_to_end()]
+            data["unknown_bytes"] = [int(b) for b in reader.read_to_end()]
         case "PalMapObjectMultiHatchingEggModel":
             data["unknown_bytes"] = [int(b) for b in reader.read_to_end()]
         case "PalMapObjectEnergyStorageModel":
@@ -581,10 +578,7 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             if "unknown_bytes" in p:
                 writer.write(bytes(p["unknown_bytes"]))
         case "PalMapObjectPalBoothModel":
-            writer.guid(p["private_lock_player_uid"])
-            writer.tarray(pal_pal_booth_trade_info_writer, p["trade_infos"])
-            if "unknown_bytes" in p:
-                writer.write(bytes(p["unknown_bytes"]))
+            writer.write(bytes(p["unknown_bytes"]))
         case "PalMapObjectMultiHatchingEggModel":
             writer.write(bytes(p["unknown_bytes"]))
         case "PalMapObjectEnergyStorageModel":
