@@ -474,6 +474,14 @@ class FArchiveReader:
                 "id": self.optional_guid(),
                 "value": self.array_property(array_type, size - 4, path),
             }
+        elif type_name == "SetProperty":
+            set_type = self.fstring()
+            value = {
+                "set_type": set_type,
+                "empty_u32": self.u32(),
+                "id": self.optional_guid(),
+                "value": self.set_property(),
+            }
         elif type_name == "MapProperty":
             key_type = self.fstring()
             value_type = self.fstring()
@@ -588,6 +596,11 @@ class FArchiveReader:
             value = {
                 "values": self.array_value(array_type, count, size, path),
             }
+        return value
+
+    def set_property(self):
+        count = self.u32()
+        value = {"values": [self.properties_until_end() for _ in range(count)]}
         return value
 
     def array_value(self, array_type: str, count: int, size: int, path: str):
@@ -909,6 +922,15 @@ class FArchiveWriter:
             array_buf = array_writer.bytes()
             size = len(array_buf)
             self.write(array_buf)
+        elif property_type == "SetProperty":
+            self.fstring(property["set_type"])
+            self.u32(property["empty_u32"])
+            self.optional_guid(property.get("id", None))
+            set_writer = self.copy()
+            set_writer.set_property(property["value"])
+            set_buf = set_writer.bytes()
+            size = len(set_buf)
+            self.write(set_buf)
         elif property_type == "MapProperty":
             self.fstring(property["key_type"])
             self.fstring(property["value_type"])
@@ -994,6 +1016,12 @@ class FArchiveWriter:
             self.write(data_buf)
         else:
             self.array_value(array_type, count, value["values"])
+
+    def set_property(self, value: dict[str, list[Any]]):
+        count = len(value["values"])
+        self.u32(count)
+        for value in value["values"]:
+            self.properties(value)
 
     def array_value(self, array_type: str, count: int, values: list[Any]):
         for i in range(count):
