@@ -476,10 +476,11 @@ class FArchiveReader:
             }
         elif type_name == "SetProperty":
             set_type = self.fstring()
+            _id = self.optional_guid()
+            self.i32()
             value = {
                 "set_type": set_type,
-                "empty_u32": self.u32(),
-                "id": self.optional_guid(),
+                "id": _id,
                 "value": self.set_property(),
             }
         elif type_name == "MapProperty":
@@ -924,9 +925,9 @@ class FArchiveWriter:
             self.write(array_buf)
         elif property_type == "SetProperty":
             self.fstring(property["set_type"])
-            self.u32(property["empty_u32"])
             self.optional_guid(property.get("id", None))
             set_writer = self.copy()
+            set_writer.u32(0)
             set_writer.set_property(property["value"])
             set_buf = set_writer.bytes()
             size = len(set_buf)
