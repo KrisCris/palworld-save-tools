@@ -648,8 +648,8 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
         case "PalMapObjectBaseCampPoint":
             writer.guid(p["base_camp_id"])
         case "PalMapObjectItemChest_AffectCorruption" | "PalMapObjectItemChestModel":
-            if "unknown_data" in p:
-                writer.write(bytes(p["unknown_data"]))
+            if "unknown_bytes" in p:
+                writer.write(bytes(p["unknown_bytes"]))
         case _:
             raise Exception(
                 f"Unknown map object concrete model {map_object_concrete_model}"

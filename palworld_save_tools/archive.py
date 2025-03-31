@@ -526,6 +526,8 @@ class FArchiveReader:
             return self.bool()
         elif type_name == "UInt32Property":
             return self.u32()
+        elif type_name == "StrProperty":
+            return self.fstring()
         else:
             raise Exception(f"Unknown property value type: {type_name} ({path})")
 
@@ -970,6 +972,8 @@ class FArchiveWriter:
             self.bool(value)
         elif type_name == "UInt32Property":
             self.u32(value)
+        elif type_name == "StrProperty":
+            self.fstring(value)
         else:
             raise Exception(f"Unknown property value type: {type_name}")
 
