@@ -6,7 +6,10 @@ import os
 
 from palworld_save_tools.gvas import GvasFile
 from palworld_save_tools.json_tools import CustomEncoder
-from palworld_save_tools.palsav import compress_gvas_to_sav, decompress_sav_to_gvas
+from palworld_save_tools.palsav import (
+    compress_gvas_to_sav,
+    decompress_sav_to_gvas,
+)
 from palworld_save_tools.paltypes import (
     DISABLED_PROPERTIES,
     PALWORLD_CUSTOM_PROPERTIES,
@@ -54,6 +57,7 @@ def main():
     )
 
     parser.add_argument("--minify-json", action="store_true", help="Minify JSON output")
+    parser.add_argument("--raw", action="store_true", help="Output raw GVAS file")
     args = parser.parse_args()
 
     if args.to_json and args.from_json:
@@ -79,6 +83,7 @@ def main():
             minify=args.minify_json,
             allow_nan=(not args.convert_nan_to_null),
             custom_properties_keys=args.custom_properties,
+            raw=args.raw,
         )
 
     if args.from_json or args.filename.endswith(".json"):
@@ -96,6 +101,7 @@ def convert_sav_to_json(
     minify=False,
     allow_nan=True,
     custom_properties_keys=["all"],
+    raw=False,
 ):
     print(f"Converting {filename} to JSON, saving to {output_path}")
     if os.path.exists(output_path):
@@ -107,6 +113,11 @@ def convert_sav_to_json(
     with open(filename, "rb") as f:
         data = f.read()
         raw_gvas, _ = decompress_sav_to_gvas(data)
+    if raw:
+        output_dir = os.path.dirname(output_path)
+        output_file_path = f"{output_dir}\\raw_gvas.sav" if raw else None
+        with open(output_file_path, "wb") as f:
+            f.write(raw_gvas)
     print(f"Loading GVAS file")
     custom_properties = {}
     if len(custom_properties_keys) > 0 and custom_properties_keys[0] == "all":

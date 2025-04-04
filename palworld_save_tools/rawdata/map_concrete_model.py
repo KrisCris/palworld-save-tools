@@ -366,6 +366,11 @@ MAP_OBJECT_NAME_TO_CONCRETE_MODEL_CLASS: dict[str, str] = {
     "basecampitemdispenser": "PalMapObjectBaseCampItemDispenserModel",
     "farm_skillfruits": "PalMapObjectFarmSkillFruitsModel",
     "expedition": "PalMapObjectCharacterTeamMissionModel",
+    "oilpump": "PalMapObjectProductItemModel",
+    "compositedesk": "PalMapObjectConvertItemModel",
+    "glass_doorwall": "PalMapObjectDoorModel",
+    "zaisu": "PalMapObjectPlayerSitModel",
+    "dimensionpalstorage": "PalMapObjectDimensionPalStorageModel",
 }
 NO_OP_TYPES = set(
     [
@@ -394,6 +399,7 @@ NO_OP_TYPES = set(
         "BlueprintGeneratedClass",
         "PalMapObjectGuildChestModel",
         "PalMapObjectBaseCampItemDispenserModel",
+        "PalMapObjectPlayerSitModel",
     ]
 )
 
@@ -421,7 +427,6 @@ def decode_bytes(
         object_id.lower()
     ]
     data["concrete_model_type"] = map_object_concrete_model
-
     match map_object_concrete_model:
         case model if model in NO_OP_TYPES:
             pass
@@ -604,6 +609,8 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             writer.guid(p["item_id"]["dynamic_id"]["local_id_in_created_world"])
         case "PalMapObjectItemDropOnDamagModel":
             writer.tarray(pal_item_and_slot_writer, p["drop_item_infos"])
+            if "unknown_bytes" in p:
+                writer.write(bytes(p["unknown_bytes"]))
         case "PalMapObjectDeathPenaltyStorageModel":
             writer.guid(p["owner_player_uid"])
             if "created_at" in p:

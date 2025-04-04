@@ -108,7 +108,7 @@ def decode_bytes(
     # UPalWorkProgressTransformBase->SerializeProperties
     transform_type = reader.byte()
     data["transform"] = {"type": transform_type, "v2": 0}
-    if transform_type == 0:
+    if transform_type in [0, 63, 64, 65, 66]:
         data["transform"]["sub_type"] = reader.byte()
         data["transform"]["map_object_instance_id"] = reader.guid()
     elif transform_type == 1:
@@ -235,7 +235,7 @@ def encode_bytes(p: dict[str, Any], work_type: str) -> bytes:
     # UPalWorkProgressTransformBase->SerializeProperties
     transform_type = p["transform"]["type"]
     writer.byte(transform_type)
-    if transform_type == 0:
+    if transform_type in [0, 63, 64, 65, 66]:
         writer.byte(p["transform"]["sub_type"])
         writer.guid(p["transform"]["map_object_instance_id"])
     elif transform_type == 1:

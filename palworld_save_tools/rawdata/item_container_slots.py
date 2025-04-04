@@ -30,7 +30,7 @@ def decode_bytes(
                 "local_id_in_created_world": reader.guid(),
             },
         },
-        "trailing_bytes_length": len(reader.read_to_end()),
+        "trailing_bytes": [int(b) for b in reader.read_to_end()],
     }
     return data
 
@@ -55,6 +55,6 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.fstring(p["item"]["static_id"])
     writer.guid(p["item"]["dynamic_id"]["created_world_id"])
     writer.guid(p["item"]["dynamic_id"]["local_id_in_created_world"])
-    writer.write(b"\x00" * p["trailing_bytes_length"])
+    writer.write(bytes(p["trailing_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes
