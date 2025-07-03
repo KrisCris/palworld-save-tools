@@ -24,6 +24,7 @@ def decode_bytes(
     data["current_order_type"] = reader.byte()
     data["current_battle_type"] = reader.byte()
     data["container_id"] = reader.guid()
+    data["unknown_bytes"] = reader.read_to_end()
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
     return data
@@ -47,5 +48,6 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.byte(p["current_order_type"])
     writer.byte(p["current_battle_type"])
     writer.guid(p["container_id"])
+    writer.write(bytes(p["unknown_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

@@ -3,6 +3,22 @@ from typing import Sequence
 from palworld_save_tools.archive import *
 
 
+def player_info_reader(reader: FArchiveReader) -> dict[str, Any]:
+    return {
+        "player_uid": reader.guid(),
+        "player_info": {
+            "last_online_real_time": reader.i64(),
+            "player_name": reader.fstring(),
+        },
+    }
+
+
+def player_info_writer(writer: FArchiveWriter, p: dict[str, Any]) -> None:
+    writer.guid(p["player_uid"])
+    writer.i64(p["player_info"]["last_online_real_time"])
+    writer.fstring(p["player_info"]["player_name"])
+
+
 def decode(
     reader: FArchiveReader, type_name: str, size: int, path: str
 ) -> dict[str, Any]:
@@ -35,19 +51,31 @@ def decode_bytes(
         "EPalGroupType::IndependentGuild",
         "EPalGroupType::Organization",
     ]:
-        org = {
-            "org_type": reader.byte(),
+        group_data |= {"org_type": reader.byte()}
+    if group_type == "EPalGroupType::Organization":
+        group_data |= {"trailing_bytes": reader.byte_list(12)}
+
+    if group_type == "EPalGroupType::Guild":
+        guild: dict[str, Any] = {
+            "leading_bytes": reader.byte_list(4),
             "base_ids": reader.tarray(uuid_reader),
+            "unknown_1": reader.i32(),
+            "base_camp_level": reader.i32(),
+            "map_object_instance_ids_base_camp_points": reader.tarray(uuid_reader),
+            "guild_name": reader.fstring(),
+            "last_guild_name_modifier_player_uid": reader.guid(),
+            "unknown_2": reader.byte_list(20),
+            "players": reader.tarray(player_info_reader),
+            "trailing_bytes": reader.byte_list(4),
         }
-        group_data |= org
-    if group_type in ["EPalGroupType::Guild", "EPalGroupType::IndependentGuild"]:
+        group_data |= guild
+    if group_type == "EPalGroupType::IndependentGuild":
         guild: dict[str, Any] = {
             "base_camp_level": reader.i32(),
             "map_object_instance_ids_base_camp_points": reader.tarray(uuid_reader),
             "guild_name": reader.fstring(),
         }
         group_data |= guild
-    if group_type == "EPalGroupType::IndependentGuild":
         indie = {
             "player_uid": reader.guid(),
             "guild_name_2": reader.fstring(),
@@ -57,26 +85,6 @@ def decode_bytes(
             },
         }
         group_data |= indie
-    if group_type == "EPalGroupType::Guild":
-        guild = {
-            "unknown_bytes": reader.byte_list(16),
-            "admin_player_uid": reader.guid(),
-            "players": [],
-        }
-        player_count = reader.i32()
-        for _ in range(player_count):
-            player = {
-                "player_uid": reader.guid(),
-                "player_info": {
-                    "last_online_real_time": reader.i64(),
-                    "player_name": reader.fstring(),
-                },
-            }
-            guild["players"].append(player)
-        group_data |= guild
-        remaining_data = reader.read_to_end()
-        if remaining_data:
-            group_data["raw_data"] = [b for b in remaining_data]
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
     return group_data
@@ -109,25 +117,26 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
         "EPalGroupType::Organization",
     ]:
         writer.byte(p["org_type"])
+    if p["group_type"] == "EPalGroupType::Organization":
+        writer.write(bytes(p["trailing_bytes"]))
+    if p["group_type"] == "EPalGroupType::Guild":
+        writer.write(bytes(p["leading_bytes"]))
         writer.tarray(uuid_writer, p["base_ids"])
-    if p["group_type"] in ["EPalGroupType::Guild", "EPalGroupType::IndependentGuild"]:
+        writer.i32(p["unknown_1"])
         writer.i32(p["base_camp_level"])
         writer.tarray(uuid_writer, p["map_object_instance_ids_base_camp_points"])
         writer.fstring(p["guild_name"])
+        writer.guid(p["last_guild_name_modifier_player_uid"])
+        writer.write(bytes(p["unknown_2"]))
+        writer.tarray(player_info_writer, p["players"])
+        writer.write(bytes(p["trailing_bytes"]))
     if p["group_type"] == "EPalGroupType::IndependentGuild":
+        writer.i32(p["base_camp_level"])
+        writer.tarray(uuid_writer, p["map_object_instance_ids_base_camp_points"])
+        writer.fstring(p["guild_name"])
         writer.guid(p["player_uid"])
         writer.fstring(p["guild_name_2"])
         writer.i64(p["player_info"]["last_online_real_time"])
         writer.fstring(p["player_info"]["player_name"])
-    if p["group_type"] == "EPalGroupType::Guild":
-        writer.write(bytes(p["unknown_bytes"]))
-        writer.guid(p["admin_player_uid"])
-        writer.i32(len(p["players"]))
-        for i in range(len(p["players"])):
-            writer.guid(p["players"][i]["player_uid"])
-            writer.i64(p["players"][i]["player_info"]["last_online_real_time"])
-            writer.fstring(p["players"][i]["player_info"]["player_name"])
-        if "raw_data" in p:
-            writer.write(bytes(p["raw_data"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

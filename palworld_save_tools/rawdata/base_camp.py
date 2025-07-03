@@ -27,6 +27,7 @@ def decode_bytes(
         "group_id_belong_to": reader.guid(),
         "fast_travel_local_transform": reader.ftransform(),
         "owner_map_object_instance_id": reader.guid(),
+        "unknown_bytes": reader.read_to_end(),
     }
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
@@ -54,5 +55,6 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.guid(p["group_id_belong_to"])
     writer.ftransform(p["fast_travel_local_transform"])
     writer.guid(p["owner_map_object_instance_id"])
+    writer.write(bytes(p["unknown_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

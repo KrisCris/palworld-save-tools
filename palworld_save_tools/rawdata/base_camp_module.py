@@ -92,6 +92,7 @@ def decode_bytes(
         print(f"Warning: Unknown base camp module type {module_type}, bytes sequence: {b_bytes}, skipping")
         return {"values": b_bytes}
 
+    data["trailing_bytes"] = reader.read_to_end()
     if not reader.eof():
         print(f"Warning: EOF not reached for {module_type}, bytes sequence: {b_bytes}")
 
@@ -141,6 +142,8 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
         )
     elif module_type == "EPalBaseCampModuleType::PassiveEffect":
         writer.tarray(module_passive_effect_writer, p["passive_effects"])
+
+    writer.write(bytes(p["trailing_bytes"]))
 
     encoded_bytes = writer.bytes()
     return encoded_bytes
