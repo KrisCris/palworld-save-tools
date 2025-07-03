@@ -18,10 +18,8 @@ class Zlib(Compressor):
         uncompressed_len = len(data)
         compressed_data = zlib.compress(data)
         compressed_len = len(compressed_data)
-        if save_type != 0x32:
-            raise Exception(
-                f"Unhandled compression type: 0x{save_type:02X}, only 0x32 (double zlib) is supported"
-            )
+        if save_type == 0x32:
+            compressed_data = zlib.compress(compressed_data)
 
         magic_bytes = self._get_magic(save_type)
         
