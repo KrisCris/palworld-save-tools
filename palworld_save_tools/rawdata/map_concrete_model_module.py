@@ -28,7 +28,7 @@ def player_lock_info_reader(reader: FArchiveReader) -> dict[str, Any]:
     return {
         "player_uid": reader.guid(),
         "try_failed_count": reader.i32(),
-        "try_success_cache": reader.u32() > 0,
+        "try_success_cache": reader.u32(),
     }
 
 
@@ -45,7 +45,7 @@ def decode_bytes(
             data["target_container_id"] = reader.guid()
             data["slot_attribute_indexes"] = reader.tarray(module_slot_indexes_reader)
             data["all_slot_attribute"] = reader.tarray(lambda r: r.byte())
-            data["drop_item_at_disposed"] = reader.u32() > 0
+            data["drop_item_at_disposed"] = reader.u32()
             data["usage_type"] = reader.byte()
             data["trailing_bytes"] = reader.byte_list(4)
         case "EPalMapObjectConcreteModelModuleType::CharacterContainer":
@@ -88,7 +88,7 @@ def module_slot_indexes_writer(writer: FArchiveWriter, value: dict[str, Any]) ->
 def player_lock_info_writer(writer: FArchiveWriter, value: dict[str, Any]) -> None:
     writer.guid(value["player_uid"])
     writer.i32(value["try_failed_count"])
-    writer.u32(1 if value["try_success_cache"] else 0)
+    writer.u32(int(value["try_success_cache"]))
 
 
 def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
@@ -101,7 +101,7 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
             writer.guid(p["target_container_id"])
             writer.tarray(module_slot_indexes_writer, p["slot_attribute_indexes"])
             writer.tarray(lambda w, v: w.byte(v), p["all_slot_attribute"])
-            writer.u32(1 if p["drop_item_at_disposed"] else 0)
+            writer.u32(int(p["drop_item_at_disposed"]))
             writer.byte(p["usage_type"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "EPalMapObjectConcreteModelModuleType::CharacterContainer":

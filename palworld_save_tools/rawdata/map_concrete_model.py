@@ -917,9 +917,9 @@ def decode_bytes(
             data["work_speed_additional_rate"] = reader.float()
             data["trailing_bytes"] = reader.byte_list(8)
         case "PalMapObjectPickupItemOnLevelModel":
-            data["auto_picked_up"] = reader.u32() > 0
+            data["auto_picked_up"] = reader.u32()
         case "PalMapObjectDropItemModel":
-            data["auto_picked_up"] = reader.u32() > 0
+            data["auto_picked_up"] = reader.u32()
             data["pickupdable_player_uid"] = reader.guid()
             data["remove_pickup_guard_timer_handle"] = reader.i64()
             data["item_id"] = {
@@ -935,7 +935,7 @@ def decode_bytes(
             if not reader.eof():
                 data["unknown_bytes"] = reader.read_to_end()
         case "PalMapObjectDeathPenaltyStorageModel":
-            data["auto_destroy_if_empty"] = reader.u32() > 0
+            data["auto_destroy_if_empty"] = reader.u32()
             data["owner_player_uid"] = reader.guid()
             data["created_at"] = reader.u64()
             if not reader.eof():
@@ -1001,7 +1001,7 @@ def decode_bytes(
             data["extinction_date_time"] = reader.i64()
             data["trailing_bytes"] = reader.byte_list(4)
         case "PalMapObjectPalEggModel":
-            data["auto_picked_up"] = reader.u32() > 0
+            data["auto_picked_up"] = reader.u32()
             data["pickupdable_player_uid"] = reader.guid()
             data["remove_pickup_guard_timer_handle"] = reader.i64()
         case "PalMapObjectBaseCampPoint":
@@ -1109,9 +1109,9 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             writer.float(p["work_speed_additional_rate"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "PalMapObjectPickupItemOnLevelModel":
-            writer.u32(1 if p["auto_picked_up"] else 0)
+            writer.u32(int(p["auto_picked_up"]))
         case "PalMapObjectDropItemModel":
-            writer.u32(1 if p["auto_picked_up"] else 0)
+            writer.u32(int(p["auto_picked_up"]))
             writer.guid(p["pickupdable_player_uid"])
             writer.i64(p["remove_pickup_guard_timer_handle"])
             writer.fstring(p["item_id"]["static_id"])
@@ -1123,7 +1123,7 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             if "unknown_bytes" in p:
                 writer.write(coerce_bytes(p["unknown_bytes"]))
         case "PalMapObjectDeathPenaltyStorageModel":
-            writer.u32(1 if p["auto_destroy_if_empty"] else 0)
+            writer.u32(int(p["auto_destroy_if_empty"]))
             writer.guid(p["owner_player_uid"])
             writer.u64(p["created_at"])
             if "trailing_bytes" in p:
@@ -1187,7 +1187,7 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             writer.i64(p["extinction_date_time"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "PalMapObjectPalEggModel":
-            writer.u32(1 if p["auto_picked_up"] else 0)
+            writer.u32(int(p["auto_picked_up"]))
             writer.guid(p["pickupdable_player_uid"])
             writer.i64(p["remove_pickup_guard_timer_handle"])
         case "PalMapObjectBaseCampPoint":

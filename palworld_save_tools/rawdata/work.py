@@ -74,9 +74,9 @@ def decode_bytes(
         data["assign_define_data_id"] = reader.fstring()
         data["override_work_type"] = reader.byte()
         data["assignable_fixed_type"] = reader.byte()
-        data["assignable_otomo"] = reader.u32() > 0
-        data["can_trigger_worker_event"] = reader.u32() > 0
-        data["can_steal_assign"] = reader.u32() > 0
+        data["assignable_otomo"] = reader.u32()
+        data["can_trigger_worker_event"] = reader.u32()
+        data["can_steal_assign"] = reader.u32()
         match work_type:
             case "EPalWorkableType::Defense":
                 data["leading_bytes"] = reader.byte_list(4)
@@ -153,7 +153,7 @@ def decode_work_assign_bytes(
         "instance_id": reader.guid(),
     }
     data["state"] = reader.byte()
-    data["fixed"] = reader.u32() > 0
+    data["fixed"] = reader.u32()
     data["trailing_bytes"] = reader.byte_list(4)
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
@@ -212,9 +212,9 @@ def encode_bytes(p: dict[str, Any], work_type: str) -> bytes:
         writer.fstring(p["assign_define_data_id"])
         writer.byte(p["override_work_type"])
         writer.byte(p["assignable_fixed_type"])
-        writer.u32(1 if p["assignable_otomo"] else 0)
-        writer.u32(1 if p["can_trigger_worker_event"] else 0)
-        writer.u32(1 if p["can_steal_assign"] else 0)
+        writer.u32(int(p["assignable_otomo"]))
+        writer.u32(int(p["can_trigger_worker_event"]))
+        writer.u32(int(p["can_steal_assign"]))
         match work_type:
             case "EPalWorkableType::Defense":
                 writer.write(coerce_bytes(p["leading_bytes"]))
@@ -274,7 +274,7 @@ def encode_work_assign_bytes(p: dict[str, Any]) -> bytes:
     writer.guid(p["assigned_individual_id"]["player_uid"])
     writer.guid(p["assigned_individual_id"]["instance_id"])
     writer.byte(p["state"])
-    writer.u32(1 if p["fixed"] else 0)
+    writer.u32(int(p["fixed"]))
     writer.write(coerce_bytes(p["trailing_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes

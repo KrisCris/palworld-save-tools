@@ -37,7 +37,7 @@ def decode_bytes(
     data["deterioration_damage"] = reader.float()
     data["stage_instance_id_belong_to"] = {
         "id": reader.guid(),
-        "valid": reader.u32() > 0,
+        "valid": reader.u32(),
     }
 
     if not reader.eof():
@@ -81,7 +81,7 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.byte(p["interact_restrict_type"])
     writer.float(p["deterioration_damage"])
     writer.guid(p["stage_instance_id_belong_to"]["id"])
-    writer.u32(1 if p["stage_instance_id_belong_to"]["valid"] else 0)
+    writer.u32(int(p["stage_instance_id_belong_to"]["valid"]))
 
     if "unknown_bytes" in p:
         writer.write(coerce_bytes(p["unknown_bytes"]))
