@@ -993,6 +993,12 @@ def decode_bytes(
             data["leading_bytes"] = reader.byte_list(4)
             data["spawned_egg_instance_ids"] = reader.tarray(uuid_reader)
             data["trailing_bytes"] = reader.byte_list(4)
+            if not reader.eof():
+                # Appended by the 2026-07 update; absent in older saves.
+                data["last_proceed_worker_individual_ids"] = reader.tarray(
+                    pal_instance_id_reader
+                )
+                data["target_breed_item_ids"] = reader.tarray(lambda r: r.fstring())
         case "PalMapObjectSignboardModel":
             data["leading_bytes"] = reader.byte_list(4)
             data["signboard_text"] = reader.fstring()
@@ -1181,6 +1187,11 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             writer.write(coerce_bytes(p["leading_bytes"]))
             writer.tarray(uuid_writer, p["spawned_egg_instance_ids"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
+            if "last_proceed_worker_individual_ids" in p:
+                writer.tarray(
+                    pal_instance_id_writer, p["last_proceed_worker_individual_ids"]
+                )
+                writer.tarray(lambda w, v: w.fstring(v), p["target_breed_item_ids"])
         case "PalMapObjectSignboardModel":
             writer.write(coerce_bytes(p["leading_bytes"]))
             writer.fstring(p["signboard_text"])
