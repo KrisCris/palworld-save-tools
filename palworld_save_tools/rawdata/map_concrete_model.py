@@ -879,10 +879,12 @@ def decode_bytes(
     data["concrete_model_type"] = map_object_concrete_model
     match map_object_concrete_model:
         case "PalMapObjectCharacterTeamMissionModel":
+            data["leading_bytes"] = reader.byte_list(4)
             data["mission_id"] = reader.fstring()
+            data["unknown_bytes"] = reader.byte_list(4)
             data["state"] = reader.byte()
             data["start_time"] = reader.i64()
-            data["unknown_bytes"] = reader.read_to_end()
+            data["trailing_bytes"] = reader.byte_list(4)
         case "PalMapObjectFarmSkillFruitsModel":
             data["leading_bytes"] = reader.byte_list(4)
             data["skill_fruits_id"] = reader.fstring()
@@ -1071,10 +1073,12 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
 
     match map_object_concrete_model:
         case "PalMapObjectCharacterTeamMissionModel":
+            writer.write(coerce_bytes(p["leading_bytes"]))
             writer.fstring(p["mission_id"])
+            writer.write(coerce_bytes(p["unknown_bytes"]))
             writer.byte(p["state"])
             writer.i64(p["start_time"])
-            writer.write(coerce_bytes(p["unknown_bytes"]))
+            writer.write(coerce_bytes(p["trailing_bytes"]))
         case "PalMapObjectFarmSkillFruitsModel":
             writer.write(coerce_bytes(p["leading_bytes"]))
             writer.fstring(p["skill_fruits_id"])
