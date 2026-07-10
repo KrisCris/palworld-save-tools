@@ -75,6 +75,9 @@ def decode_bytes(
         case "EPalMapObjectConcreteModelModuleType::RequireElementalAction":
             data["unlock_item"] = reader.fstring()
             data["trailing_bytes"] = reader.byte_list(12)
+        case "EPalMapObjectConcreteModelModuleType::GuildSecurity":
+            data["allowed_roles"] = reader.tarray(lambda r: r.byte())
+            data["trailing_bytes"] = reader.byte_list(4)
     if not reader.eof():
         raise Exception(f"Warning: EOF not reached for module type {module_type}")
     return data
@@ -120,6 +123,9 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "EPalMapObjectConcreteModelModuleType::RequireElementalAction":
             writer.fstring(p["unlock_item"])
+            writer.write(coerce_bytes(p["trailing_bytes"]))
+        case "EPalMapObjectConcreteModelModuleType::GuildSecurity":
+            writer.tarray(lambda w, v: w.byte(v), p["allowed_roles"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
 
     encoded_bytes = writer.bytes()
