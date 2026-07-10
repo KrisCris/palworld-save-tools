@@ -166,18 +166,35 @@ def encode(
 ) -> int:
     if property_type != "ArrayProperty":
         raise Exception(f"Expected ArrayProperty, got {property_type}")
-    del properties["custom_type"]
+    work_elements = []
     for work_element in properties["value"]["values"]:
         work_type = work_element["WorkableType"]["value"]["value"]
-        work_element["RawData"]["value"] = {
-            "values": encode_bytes(work_element["RawData"]["value"], work_type)
-        }
-        for work_assign in work_element["WorkAssignMap"]["value"]:
-            work_assign["value"]["RawData"]["value"] = {
-                "values": encode_work_assign_bytes(
-                    work_assign["value"]["RawData"]["value"]
-                )
+        work_assign_map = [
+            {
+                **work_assign,
+                "value": {
+                    **work_assign["value"],
+                    "RawData": encoded_raw_data(
+                        work_assign["value"]["RawData"], encode_work_assign_bytes
+                    ),
+                },
             }
+            for work_assign in work_element["WorkAssignMap"]["value"]
+        ]
+        work_elements.append(
+            {
+                **work_element,
+                "RawData": encoded_raw_data(
+                    work_element["RawData"], encode_bytes, work_type
+                ),
+                "WorkAssignMap": {
+                    **work_element["WorkAssignMap"],
+                    "value": work_assign_map,
+                },
+            }
+        )
+    properties = without_custom_type(properties)
+    properties["value"] = {**properties["value"], "values": work_elements}
     return writer.property_inner(property_type, properties)
 
 

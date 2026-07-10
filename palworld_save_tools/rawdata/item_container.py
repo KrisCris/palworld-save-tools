@@ -36,8 +36,8 @@ def encode(
 ) -> int:
     if property_type != "ArrayProperty":
         raise Exception(f"Expected ArrayProperty, got {property_type}")
-    del properties["custom_type"]
     encoded_bytes = encode_bytes(properties["value"])
+    properties = without_custom_type(properties)
     properties["value"] = {"values": encoded_bytes}
     return writer.property_inner(property_type, properties)
 

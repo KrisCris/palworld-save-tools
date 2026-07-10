@@ -24,5 +24,5 @@ def encode(
 ) -> int:
     if property_type != "ArrayProperty":
         raise Exception(f"Expected ArrayProperty, got {property_type}")
-    del properties["custom_type"]
+    properties = without_custom_type(properties)
     return writer.property_inner(property_type, properties)

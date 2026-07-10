@@ -27,6 +27,30 @@ def coerce_bytes(value) -> bytes:
         return base64.b64decode(value)
     return bytes(value)
 
+
+def without_custom_type(properties: dict[str, Any]) -> dict[str, Any]:
+    """Shallow copy of a property dict with ``custom_type`` stripped.
+
+    Custom-property encoders re-enter ``property_inner``, which dispatches on
+    ``custom_type``; leaving it in place would recurse. Returning a copy keeps
+    the caller's parsed structure intact so a GVAS object survives ``write()``.
+    """
+    return {k: v for k, v in properties.items() if k != "custom_type"}
+
+
+def encoded_raw_data(
+    raw_data: dict[str, Any], encoder: Callable, *args: Any
+) -> dict[str, Any]:
+    """Copy of a ``RawData`` node with its decoded value replaced by raw bytes.
+
+    Already-encoded nodes (those carrying ``values``) are returned untouched,
+    which is how partially-decoded saves round-trip.
+    """
+    if "values" in raw_data["value"]:
+        return raw_data
+    return {**raw_data, "value": {"values": encoder(raw_data["value"], *args)}}
+
+
 # Alias stdlib types to avoid name conflicts
 _float = float
 _bytes = bytes

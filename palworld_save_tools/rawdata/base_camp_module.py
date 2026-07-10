@@ -2,7 +2,13 @@ from typing import Any, Sequence
 
 from loguru import logger
 
-from palworld_save_tools.archive import FArchiveReader, FArchiveWriter, coerce_bytes
+from palworld_save_tools.archive import (
+    FArchiveReader,
+    FArchiveWriter,
+    coerce_bytes,
+    encoded_raw_data,
+    without_custom_type,
+)
 from palworld_save_tools.rawdata.common import (
     pal_item_and_num_read,
     pal_item_and_slot_writer,
@@ -109,16 +115,22 @@ def encode(
 ) -> int:
     if property_type != "MapProperty":
         raise Exception(f"Expected MapProperty, got {property_type}")
-    del properties["custom_type"]
 
-    module_map = properties["value"]
-    for module in module_map:
-        module_type = module["key"]
-        if "values" not in module["value"]["RawData"]["value"]:
-            module["value"]["RawData"]["value"]["values"] = encode_bytes(
-                module["value"]["RawData"]["value"], module_type
-            )
+    module_map = [
+        {
+            **module,
+            "value": {
+                **module["value"],
+                "RawData": encoded_raw_data(
+                    module["value"]["RawData"], encode_bytes, module["key"]
+                ),
+            },
+        }
+        for module in properties["value"]
+    ]
 
+    properties = without_custom_type(properties)
+    properties["value"] = module_map
     return writer.property_inner(property_type, properties)
 
 

@@ -96,14 +96,17 @@ def encode(
 ) -> int:
     if property_type != "MapProperty":
         raise Exception(f"Expected MapProperty, got {property_type}")
-    del properties["custom_type"]
-    group_map = properties["value"]
-    for group in group_map:
-        if "values" in group["value"]["RawData"]["value"]:
-            continue
-        p = group["value"]["RawData"]["value"]
-        encoded_bytes = encode_bytes(p)
-        group["value"]["RawData"]["value"] = {"values": encoded_bytes}
+    group_map = []
+    for group in properties["value"]:
+        raw_data = encoded_raw_data(group["value"]["RawData"], encode_bytes)
+        if raw_data is group["value"]["RawData"]:
+            group_map.append(group)
+        else:
+            group_map.append(
+                {**group, "value": {**group["value"], "RawData": raw_data}}
+            )
+    properties = without_custom_type(properties)
+    properties["value"] = group_map
     return writer.property_inner(property_type, properties)
 
 

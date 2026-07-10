@@ -1,5 +1,10 @@
 from typing import Any, Optional, Sequence
-from palworld_save_tools.archive import FArchiveReader, FArchiveWriter, coerce_bytes
+from palworld_save_tools.archive import (
+    FArchiveReader,
+    FArchiveWriter,
+    coerce_bytes,
+    without_custom_type,
+)
 from palworld_save_tools.rawdata.common import (
     lab_research_rep_info_read,
     lab_research_rep_info_writer,
@@ -34,8 +39,8 @@ def encode(
 ) -> int:
     if property_type != "ArrayProperty":
         raise Exception(f"Expected ArrayProperty, got {property_type}")
-    del properties["custom_type"]
     encoded_bytes = encode_bytes(properties["value"])
+    properties = without_custom_type(properties)
     properties["value"] = {"values": encoded_bytes}
     return writer.property_inner(property_type, properties)
 
