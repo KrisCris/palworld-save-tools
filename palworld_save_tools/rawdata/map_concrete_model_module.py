@@ -32,6 +32,19 @@ def player_lock_info_reader(reader: FArchiveReader) -> dict[str, Any]:
     }
 
 
+def color_setting_entry_reader(reader: FArchiveReader) -> dict[str, Any]:
+    # FPalColorSettingEntry: FName Key + FLinearColor Color.
+    return {
+        "key": reader.fstring(),
+        "color": {
+            "r": reader.float(),
+            "g": reader.float(),
+            "b": reader.float(),
+            "a": reader.float(),
+        },
+    }
+
+
 def decode_bytes(
     parent_reader: FArchiveReader, m_bytes: Sequence[int], module_type: str
 ) -> Optional[dict[str, Any]]:
@@ -78,6 +91,9 @@ def decode_bytes(
         case "EPalMapObjectConcreteModelModuleType::GuildSecurity":
             data["allowed_roles"] = reader.tarray(lambda r: r.byte())
             data["trailing_bytes"] = reader.byte_list(4)
+        case "EPalMapObjectConcreteModelModuleType::ColorSetting":
+            data["color_entries"] = reader.tarray(color_setting_entry_reader)
+            data["trailing_bytes"] = reader.byte_list(4)
     if not reader.eof():
         raise Exception(f"Warning: EOF not reached for module type {module_type}")
     return data
@@ -92,6 +108,15 @@ def player_lock_info_writer(writer: FArchiveWriter, value: dict[str, Any]) -> No
     writer.guid(value["player_uid"])
     writer.i32(value["try_failed_count"])
     writer.u32(int(value["try_success_cache"]))
+
+
+def color_setting_entry_writer(writer: FArchiveWriter, value: dict[str, Any]) -> None:
+    writer.fstring(value["key"])
+    color = value["color"]
+    writer.float(color["r"])
+    writer.float(color["g"])
+    writer.float(color["b"])
+    writer.float(color["a"])
 
 
 def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
@@ -126,6 +151,9 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "EPalMapObjectConcreteModelModuleType::GuildSecurity":
             writer.tarray(lambda w, v: w.byte(v), p["allowed_roles"])
+            writer.write(coerce_bytes(p["trailing_bytes"]))
+        case "EPalMapObjectConcreteModelModuleType::ColorSetting":
+            writer.tarray(color_setting_entry_writer, p["color_entries"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
 
     encoded_bytes = writer.bytes()
