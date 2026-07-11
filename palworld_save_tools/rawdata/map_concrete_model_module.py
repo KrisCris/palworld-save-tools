@@ -94,6 +94,9 @@ def decode_bytes(
         case "EPalMapObjectConcreteModelModuleType::ColorSetting":
             data["color_entries"] = reader.tarray(color_setting_entry_reader)
             data["trailing_bytes"] = reader.byte_list(4)
+        case "EPalMapObjectConcreteModelModuleType::OperationalLoad":
+            data["current_load"] = reader.float()
+            data["trailing_bytes"] = reader.byte_list(8)
     if not reader.eof():
         raise Exception(f"Warning: EOF not reached for module type {module_type}")
     return data
@@ -154,6 +157,9 @@ def encode_bytes(p: dict[str, Any], module_type: str) -> bytes:
             writer.write(coerce_bytes(p["trailing_bytes"]))
         case "EPalMapObjectConcreteModelModuleType::ColorSetting":
             writer.tarray(color_setting_entry_writer, p["color_entries"])
+            writer.write(coerce_bytes(p["trailing_bytes"]))
+        case "EPalMapObjectConcreteModelModuleType::OperationalLoad":
+            writer.float(p["current_load"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
 
     encoded_bytes = writer.bytes()
