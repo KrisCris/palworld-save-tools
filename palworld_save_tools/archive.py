@@ -523,10 +523,20 @@ class FArchiveReader:
         _id = self.optional_guid()
         self.u32()
         count = self.u32()
+        struct_type = None
+        if set_type == "StructProperty":
+            struct_type = self.get_type_or(f"{path}.StructProperty", "StructProperty")
+            value = [
+                self.struct_value(struct_type, f"{path}.StructProperty")
+                for _ in range(count)
+            ]
+        else:
+            value = [self.properties_until_end() for _ in range(count)]
         return {
             "set_type": set_type,
             "id": _id,
-            "value": [self.properties_until_end() for _ in range(count)],
+            "struct_type": struct_type,
+            "value": value,
         }
 
     _PROPERTY_DISPATCH: dict[str, Callable] = {
@@ -1017,8 +1027,12 @@ class FArchiveWriter:
         start = self.data.tell()
         self.u32(0)
         self.u32(len(property["value"]))
+        struct_type = property.get("struct_type", None)
         for element in property["value"]:
-            self.properties(element)
+            if property["set_type"] == "StructProperty" and struct_type is not None:
+                self.struct_value(struct_type, element)
+            else:
+                self.properties(element)
         return self.data.tell() - start
 
     _PROPERTY_DISPATCH: dict[str, Callable] = {
