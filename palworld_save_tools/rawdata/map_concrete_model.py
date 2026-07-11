@@ -1022,6 +1022,14 @@ def decode_bytes(
             data["trailing_bytes"] = reader.byte_list(4)
         case "PalMapObjectDimensionPalStorageModel":
             data["trailing_bytes"] = reader.byte_list(12)
+        case "PalMapObjectLampModel":
+            data["trailing_bytes"] = reader.byte_list(4)
+            if not reader.eof():
+                # Appended by the 2026-07 lamp light-color update; absent in
+                # older saves. `is_manually_turned_off` flips to 1 when a lamp
+                # is manually switched off.
+                data["is_manually_turned_off"] = reader.u32()
+                data["unknown_bytes"] = reader.byte_list(4)
         case (
             "PalMapObjectPlayerBedModel"
             | "PalBuildObject"
@@ -1032,7 +1040,6 @@ def decode_bytes(
             | "PalMapObjectDoorModel"
             | "PalMapObjectMonsterFarmModel"
             | "PalMapObjectAmusementModel"
-            | "PalMapObjectLampModel"
             | "PalMapObjectLabModel"
             | "PalMapObjectRepairItemModel"
             | "PalMapObjectBaseCampPassiveWorkHardModel"
@@ -1213,6 +1220,11 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             writer.write(coerce_bytes(p["leading_bytes"]))
             writer.guid(p["private_lock_player_uid"])
             writer.write(coerce_bytes(p["trailing_bytes"]))
+        case "PalMapObjectLampModel":
+            writer.write(coerce_bytes(p["trailing_bytes"]))
+            if "is_manually_turned_off" in p:
+                writer.u32(int(p["is_manually_turned_off"]))
+                writer.write(coerce_bytes(p["unknown_bytes"]))
         case (
             "PalMapObjectPlayerBedModel"
             | "PalBuildObject"
@@ -1223,7 +1235,6 @@ def encode_bytes(p: Optional[dict[str, Any]]) -> bytes:
             | "PalMapObjectDoorModel"
             | "PalMapObjectMonsterFarmModel"
             | "PalMapObjectAmusementModel"
-            | "PalMapObjectLampModel"
             | "PalMapObjectLabModel"
             | "PalMapObjectRepairItemModel"
             | "PalMapObjectBaseCampPassiveWorkHardModel"
