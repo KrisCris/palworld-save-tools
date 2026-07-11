@@ -52,6 +52,8 @@ def decode_bytes(
             temp_data["durability"] = reader.float()
             temp_data["remaining_bullets"] = reader.i32()
             temp_data["passive_skill_list"] = reader.tarray(lambda r: r.fstring())
+            if (reader.size - reader.data.tell()) > 4:
+                temp_data["unknown_str"] = reader.fstring()
             temp_data["trailing_bytes"] = reader.byte_list(4)
             if not reader.eof():
                 raise Exception("Warning: EOF not reached")
@@ -117,6 +119,8 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
         writer.float(p["durability"])
         writer.i32(p["remaining_bullets"])
         writer.tarray(lambda w, d: (w.fstring(d), None)[1], p["passive_skill_list"])
+        if "unknown_str" in p:
+            writer.fstring(p["unknown_str"])
         writer.write(coerce_bytes(p["trailing_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes
