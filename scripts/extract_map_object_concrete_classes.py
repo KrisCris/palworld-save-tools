@@ -5,6 +5,8 @@ import json
 import os
 import sys
 
+from loguru import logger
+
 
 def main():
     export_path = sys.argv[1]
@@ -43,11 +45,11 @@ def main():
         object_data = map_object_data_table[0]["Rows"][object_name]
         asset_path_name = object_data["BlueprintClassSoft"]["AssetPathName"]
         if asset_path_name == "None":
-            print(f"Skipping {object_name} as it has no blueprint soft ptr")
+            logger.info(f"Skipping {object_name} as it has no blueprint soft ptr")
             continue
         blueprint_class_name = object_data["BlueprintClassName"]
         if blueprint_class_name.lower() not in blueprints:
-            print(
+            logger.debug(
                 f"Skipping {object_name} as the blueprint class {blueprint_class_name} is not found"
             )
             continue
@@ -61,7 +63,7 @@ def main():
                 "BlueprintGeneratedClass'"
             )
             if blueprint_class_search.lower() not in blueprints:
-                print(f"Warning: Blueprint class {blueprint_class_search} not found")
+                logger.debug(f"Blueprint class {blueprint_class_search} not found")
                 return None
             blueprint_class = blueprints[blueprint_class_search.lower()]
             for _, class_data in blueprint_class.items():
@@ -69,7 +71,7 @@ def main():
                     return resolve_concrete_class_name(
                         class_data["SuperStruct"]["ObjectName"]
                     )
-        print(f"Warning: Unhandled class name {class_name}")
+        logger.debug(f"Unhandled class name {class_name}")
         return None
 
     def resolve_object_super_concrete_class_name(class_name):
@@ -80,33 +82,36 @@ def main():
                 "BlueprintGeneratedClass'"
             )
             if blueprint_class_search.lower() not in blueprints:
-                print(f"Warning: Blueprint class {blueprint_class_search} not found")
+                logger.debug(f"Blueprint class {blueprint_class_search} not found")
                 return None
             blueprint_class = blueprints[blueprint_class_search.lower()]
             struct_data = blueprint_class.get(
                 f"Default__{blueprint_class_search}_C".lower(), None
             )
             if struct_data is None:
-                print("Warning: No struct found for", blueprint_class_search)
+                logger.debug(f"No struct found for {blueprint_class_search}")
                 return None
             if "ConcreteModelClass" in struct_data["Properties"]:
                 return resolve_concrete_class_name(
                     struct_data["Properties"]["ConcreteModelClass"]["ObjectName"]
                 )
-        print(f"Warning: Unhandled class name {class_name}")
+        logger.debug(f"Unhandled class name {class_name}")
         return None
 
     # Extract the concrete classes
     concrete_classes = {}
     for object_name, blueprint_class_name in object_blueprints.items():
-        print(blueprint_class_name)
+        logger.debug(blueprint_class_name)
         blueprint = blueprints[blueprint_class_name]
         # Search for the generated class definition
         struct_data = blueprint.get(f"Default__{blueprint_class_name}_C".lower(), None)
         if struct_data is None:
-            print("Warning: No struct found for", blueprint_class_name)
+            logger.debug(f"No struct found for {blueprint_class_name}")
             continue
-        if "ConcreteModelClass" in struct_data["Properties"]:
+        if (
+            "ConcreteModelClass" in struct_data["Properties"]
+            and struct_data["Properties"]["ConcreteModelClass"] is not None
+        ):
             concrete_classes[object_name] = resolve_concrete_class_name(
                 struct_data["Properties"]["ConcreteModelClass"]["ObjectName"]
             )
@@ -114,23 +119,26 @@ def main():
             # Search for the super class
             bp_gen_class = blueprint.get(f"{blueprint_class_name}_C".lower(), None)
             if bp_gen_class is None:
-                print(
-                    "Warning: No blueprint generated class found for",
-                    blueprint_class_name,
+                logger.debug(
+                    f"No blueprint generated class found for {blueprint_class_name}"
                 )
                 continue
             concrete_class = resolve_object_super_concrete_class_name(
                 bp_gen_class["SuperStruct"]["ObjectName"]
             )
-            print(concrete_class)
+            logger.debug(concrete_class)
             concrete_classes[object_name] = concrete_class
             if concrete_class is None:
-                print("Warning: No concrete class found for", object_name)
+                logger.debug(f"No concrete class found for {object_name}")
                 concrete_classes[object_name] = (
                     "DEFAULT_UNKNOWN_PalMapObjectConcreteModelBase"
                 )
 
-    print(concrete_classes)
+    logger.info(f"Writing concrete classes to file {export_path}")
+    with open(
+        os.path.join(export_path, "concrete_classes.json"), "w", encoding="utf-8"
+    ) as f:
+        json.dump(concrete_classes, f, indent=4, ensure_ascii=False)
 
 
 if __name__ == "__main__":

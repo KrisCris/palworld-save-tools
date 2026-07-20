@@ -7,13 +7,18 @@ name = "palworld-save-tools"
 authors = [{ name = "Jun Siang Cheah", email = "me@jscheah.me" }]
 description = "Tools for converting Palworld .sav files to JSON and back"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Programming Language :: Python :: 3",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent",
 ]
 dynamic = ["version"]
+dependencies = [
+    "loguru>=0.7.3",
+    "orjson>=3.11.8",
+    "pyooz @ git+https://github.com/oMaN-Rod/pyooz.git",
+]
 
 [project.urls]
 Homepage = "https://github.com/cheahjs/palworld-save-tools"
@@ -25,13 +30,13 @@ palworld-save-tools = "palworld_save_tools.commands.convert:main"
 [project.optional-dependencies]
 # These are dependencies only for tests
 # Default usage of the library must not rely on any external dependencies!
-tests = [
-  "parameterized==0.9.0",
-  "mypy==1.8.0"
-]
+tests = ["parameterized==0.9.0", "mypy==1.8.0"]
 # Additional dependencies to provide more performant implementations
 performance = ["recordclass"]
 
 [[tool.mypy.overrides]]
 module = ["recordclass", "parameterized"]
 ignore_missing_imports = true
+
+[tool.hatch.metadata]
+allow-direct-references = true

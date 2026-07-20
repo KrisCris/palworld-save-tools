@@ -51,11 +51,16 @@ PALWORLD_TYPE_HINTS: dict[str, str] = {
     ".worldSaveData.InvaderSaveData.Key": "Guid",
     ".worldSaveData.InvaderSaveData.Value": "StructProperty",
     ".worldSaveData.OilrigSaveData.OilrigMap.Value": "StructProperty",
+    ".worldSaveData.InvaderDeclarationSaveData.ValidatedStartPointIds.StructProperty": "Guid",
     ".worldSaveData.SupplySaveData.SupplyInfos.Key": "Guid",
     ".worldSaveData.SupplySaveData.SupplyInfos.Value": "StructProperty",
     ".worldSaveData.GuildExtraSaveDataMap.Key": "Guid",
     ".worldSaveData.GuildExtraSaveDataMap.Value": "StructProperty",
     ".worldSaveData.EnemyCampSaveData.EnemyCampStatusMap.Value.TreasureBoxInfoMapBySpawnerName.Value": "StructProperty",
+    ".worldSaveData.DungeonSaveData.DungeonSaveData.RewardSaveDataMap.Key": "Guid",
+    ".worldSaveData.DungeonSaveData.DungeonSaveData.RewardSaveDataMap.Value": "StructProperty",
+    ".SaveData.Local_MaxFriendshipPalIds.Key": "Guid",
+    ".SaveData.Local_MaxFriendshipPalIds.Value": "StructProperty",
 }
 
 PALWORLD_CUSTOM_PROPERTIES: dict[

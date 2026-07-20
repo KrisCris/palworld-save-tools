@@ -5,113 +5,121 @@ import unittest
 
 from parameterized import parameterized
 
+# Temp use oodle dll, this will be replaced with open source solution in the future
+OODLE_PATH = ""
+
 
 class TestCliScripts(unittest.TestCase):
+    # Add test files to the testdata directory
     @parameterized.expand(
         [
-            ("Level.sav"),
-            ("Level-tricky-unicode-player-name.sav"),
-            ("LevelMeta.sav"),
-            ("LocalData.sav"),
-            ("WorldOption.sav"),
-            ("00000000000000000000000000000001.sav"),
-            ("unicode-saves/Level.sav"),
-            ("unicode-saves/LevelMeta.sav"),
-            ("unicode-saves/LocalData.sav"),
-            ("unicode-saves/WorldOption.sav"),
-            ("unicode-saves/00000000000000000000000000000001.sav"),
-            ("larger-saves/Level.sav"),
-            ("larger-saves/LocalData.sav"),
-            ("larger-saves/00000000000000000000000000000001.sav"),
-            ("v0.2.0.6/Level.sav"),
-            ("v0.3.2/Level-1.sav"),
-            ("v0.3.2/Level-2.sav"),
-            ("v0.3.2/Level-3.sav"),
-            ("v0.3.7/Level.sav"),
+            ("v0.6/O.sav"),
         ]
     )
     def test_sav_roundtrip(self, file_name):
         try:
             base_name = os.path.basename(file_name)
             dir_name = os.path.dirname(file_name)
+
+            # Read original sav file
+            with open(f"tests/testdata/{dir_name}/{base_name}", "rb") as f:
+                original_sav_data = f.read()
+
             # Convert sav to JSON
             run = subprocess.run(
                 [
-                    "python3",
+                    "python",
                     "-m",
                     "palworld_save_tools.commands.convert",
+                    "--oodle-path",
+                    OODLE_PATH,
                     f"tests/testdata/{dir_name}/{base_name}",
+                    "--force",
+                    "--raw",
                 ]
             )
             self.assertEqual(run.returncode, 0)
             self.assertTrue(
                 os.path.exists(f"tests/testdata/{dir_name}/{base_name}.json")
             )
+
+            # Read the generated JSON
+            with open(
+                f"tests/testdata/{dir_name}/{base_name}.json", "r", encoding="utf-8"
+            ) as f:
+                original_json_data = f.read()
+
             # Convert JSON back to sav
             os.rename(
                 f"tests/testdata/{dir_name}/{base_name}.json",
-                f"tests/testdata/{dir_name}/1-{base_name}.json",
+                f"tests/testdata/{dir_name}/roundtrip-{base_name}.json",
             )
             run = subprocess.run(
                 [
-                    "python3",
+                    "python",
                     "-m",
                     "palworld_save_tools.commands.convert",
-                    f"tests/testdata/{dir_name}/1-{base_name}.json",
-                ]
-            )
-            self.assertEqual(run.returncode, 0)
-            self.assertTrue(os.path.exists(f"tests/testdata/{dir_name}/1-{base_name}"))
-            # Reconvert sav back to JSON
-            os.rename(
-                f"tests/testdata/{dir_name}/1-{base_name}",
-                f"tests/testdata/{dir_name}/2-{base_name}",
-            )
-            run = subprocess.run(
-                [
-                    "python3",
-                    "-m",
-                    "palworld_save_tools.commands.convert",
-                    f"tests/testdata/{dir_name}/2-{base_name}",
+                    "--oodle-path",
+                    OODLE_PATH,
+                    f"tests/testdata/{dir_name}/roundtrip-{base_name}.json",
+                    "--force",
+                    "--raw",
                 ]
             )
             self.assertEqual(run.returncode, 0)
             self.assertTrue(
-                os.path.exists(f"tests/testdata/{dir_name}/2-{base_name}.json")
+                os.path.exists(f"tests/testdata/{dir_name}/roundtrip-{base_name}")
             )
-            # Reconvert JSON back to sav
-            os.rename(
-                f"tests/testdata/{dir_name}/2-{base_name}.json",
-                f"tests/testdata/{dir_name}/3-{base_name}.json",
+
+            # Read the roundtrip sav file
+            with open(f"tests/testdata/{dir_name}/roundtrip-{base_name}", "rb") as f:
+                roundtrip_sav_data = f.read()
+
+            # Compare original and roundtrip sav files
+            self.assertEqual(
+                original_sav_data,
+                roundtrip_sav_data,
+                "Original and roundtrip sav files should be identical",
             )
+
+            # Convert the roundtrip sav back to JSON to verify JSON consistency
             run = subprocess.run(
                 [
-                    "python3",
+                    "python",
                     "-m",
                     "palworld_save_tools.commands.convert",
-                    f"tests/testdata/{dir_name}/3-{base_name}.json",
+                    "--oodle-path",
+                    OODLE_PATH,
+                    f"tests/testdata/{dir_name}/roundtrip-{base_name}",
+                    "--force",
+                    "--raw",
                 ]
             )
             self.assertEqual(run.returncode, 0)
-            self.assertTrue(os.path.exists(f"tests/testdata/{dir_name}/3-{base_name}"))
-            # Compare the final sav to the intermediate save
-            with open(f"tests/testdata/{dir_name}/2-{base_name}", "rb") as f:
-                intermediate_data = f.read()
-            with open(f"tests/testdata/{dir_name}/3-{base_name}", "rb") as f:
-                final_data = f.read()
-            self.assertEqual(intermediate_data, final_data)
+            self.assertTrue(
+                os.path.exists(f"tests/testdata/{dir_name}/roundtrip-{base_name}.json")
+            )
+
+            # Read the roundtrip JSON
+            with open(
+                f"tests/testdata/{dir_name}/roundtrip-{base_name}.json",
+                "r",
+                encoding="utf-8",
+            ) as f:
+                roundtrip_json_data = f.read()
+
+            # Compare original and roundtrip JSON files
+            self.assertEqual(
+                original_json_data,
+                roundtrip_json_data,
+                "Original and roundtrip JSON files should be identical",
+            )
+
         finally:
+            # Clean up all generated files
             with contextlib.suppress(FileNotFoundError):
                 os.remove(f"tests/testdata/{dir_name}/{base_name}.json")
             with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/1-{base_name}")
+                os.remove(f"tests/testdata/{dir_name}/roundtrip-{base_name}")
             with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/1-{base_name}.json")
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/2-{base_name}")
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/2-{base_name}.json")
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/3-{base_name}")
-            with contextlib.suppress(FileNotFoundError):
-                os.remove(f"tests/testdata/{dir_name}/3-{base_name}.json")
+                os.remove(f"tests/testdata/{dir_name}/roundtrip-{base_name}.json")

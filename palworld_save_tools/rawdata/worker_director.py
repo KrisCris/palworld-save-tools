@@ -17,14 +17,14 @@ def decode(
 def decode_bytes(
     parent_reader: FArchiveReader, b_bytes: Sequence[int]
 ) -> dict[str, Any]:
-    reader = parent_reader.internal_copy(bytes(b_bytes), debug=False)
+    reader = parent_reader.internal_copy(coerce_bytes(b_bytes), debug=False)
     data: dict[str, Any] = {}
     data["id"] = reader.guid()
     data["spawn_transform"] = reader.ftransform()
     data["current_order_type"] = reader.byte()
     data["current_battle_type"] = reader.byte()
     data["container_id"] = reader.guid()
-    data["unknown_bytes"] = reader.read_to_end()
+    data["trailing_bytes"] = reader.byte_list(4)
     if not reader.eof():
         raise Exception("Warning: EOF not reached")
     return data
@@ -35,9 +35,9 @@ def encode(
 ) -> int:
     if property_type != "ArrayProperty":
         raise Exception(f"Expected ArrayProperty, got {property_type}")
-    del properties["custom_type"]
     encoded_bytes = encode_bytes(properties["value"])
-    properties["value"] = {"values": [b for b in encoded_bytes]}
+    properties = without_custom_type(properties)
+    properties["value"] = {"values": encoded_bytes}
     return writer.property_inner(property_type, properties)
 
 
@@ -48,6 +48,6 @@ def encode_bytes(p: dict[str, Any]) -> bytes:
     writer.byte(p["current_order_type"])
     writer.byte(p["current_battle_type"])
     writer.guid(p["container_id"])
-    writer.write(bytes(p["unknown_bytes"]))
+    writer.write(coerce_bytes(p["trailing_bytes"]))
     encoded_bytes = writer.bytes()
     return encoded_bytes
